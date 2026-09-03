@@ -1,0 +1,29 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate          # Flyway vẫn sở hữu schema, JPA chỉ đối chiếu
+    open-in-view: false
+    show-sql: false               # bật true khi cần soi SQL trong test
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always        # test fail thì thấy ngay component nào DOWN
+  health:
+    redis:
+      enabled: false              # Phase 0 chưa provision Redis trong test
+    mail:
+      enabled: false              # chưa provision SMTP trong test
+
+logging:
+  level:
+    org.testcontainers: INFO
+    org.flywaydb: INFO

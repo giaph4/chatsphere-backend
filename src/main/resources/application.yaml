@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: chatsphere-backend
+  profiles:
+    default: dev        # chạy local mặc định profile dev; production set SPRING_PROFILES_ACTIVE=prod
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+    time-zone: UTC
+#    serialization:
+#      write-dates-as-timestamps: false         # Instant/LocalDate... -> chuỗi ISO-8601, KHÔNG phải số
+#      write-durations-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false         # client gửi thừa field -> bỏ qua, không 400
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

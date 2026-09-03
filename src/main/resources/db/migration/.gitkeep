@@ -1,0 +1,3 @@
+# Thư mục chứa Flyway migration scripts (V1__*.sql, V2__*.sql ...).
+# Quy ước đặt tên & danh sách 11 script: xem 02_SETUP_GUIDE.md mục 6.
+# Script thực tế được viết theo 03_CODE_ROADMAP.md, bắt đầu từ Phase 1.

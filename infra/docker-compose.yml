@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chatsphere-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chatsphere
+      POSTGRES_USER: chatsphere
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"   # host 5433 -> tránh đụng PostgreSQL/khác đang chiếm 5432 trên máy
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatsphere"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: chatsphere-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass 123456
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "123456", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: chatsphere-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: chatsphere_admin
+      MINIO_ROOT_PASSWORD: minio_dev_password   # MinIO yêu cầu tối thiểu 8 ký tự
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console web
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  coturn:
+    image: coturn/coturn:latest
+    container_name: chatsphere-coturn
+    restart: unless-stopped
+    network_mode: "host"     # coturn cần host network để xử lý đúng NAT
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: chatsphere-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP giả lập — dùng test email xác thực/quên mật khẩu
+      - "8025:8025"   # Web UI xem email đã gửi
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
