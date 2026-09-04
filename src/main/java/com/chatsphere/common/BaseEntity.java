@@ -10,12 +10,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Lớp cha cho mọi entity nghiệp vụ chính: gom {@code id} (UUID) + audit columns
- * ({@code created_at}, {@code updated_at}). Xem 01_SYSTEM_DESIGN.md §7.1.
- *
- * <p>Lưu ý: entity nào không có cột updated_at (vd RefreshToken) thì KHÔNG kế thừa lớp này.
- */
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)

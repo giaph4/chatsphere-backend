@@ -1,13 +1,9 @@
-// File: src/main/java/com/chatsphere/common/ErrorCode.java
 package com.chatsphere.common;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-/**
- * Danh mục mã lỗi nghiệp vụ toàn hệ thống. Thêm mã mới vào đúng nhóm khi phát sinh ở các Phase sau.
- * {@code name()} của hằng số chính là "code" trả về cho client (01_SYSTEM_DESIGN.md §8.1).
- */
+
 @Getter
 public enum ErrorCode {
 

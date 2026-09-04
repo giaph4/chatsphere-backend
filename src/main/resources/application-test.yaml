@@ -1,4 +1,8 @@
 spring:
+  task:
+    execution:
+      pool:
+        core-size: 1
   jpa:
     hibernate:
       ddl-auto: validate          # Flyway vẫn sở hữu schema, JPA chỉ đối chiếu
@@ -8,6 +12,26 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+  data:
+    redis:
+      password:                   # container redis trong test không đặt password -> ghi đè rỗng
+
+  mail:
+    host: localhost               # chỉ để MailSenderAutoConfiguration tạo bean JavaMailSender;
+    port: 1025                    # test @MockitoBean nó đi, không có kết nối SMTP thật nào
+
+app:
+  mail:
+    from: no-reply@chatsphere.test
+  frontend-url: http://localhost:5173
+  cors:
+    allowed-origins: http://localhost:5173
+  jwt:
+    # 32 byte base64 — đủ mạnh cho HMAC-SHA256. Chỉ dùng trong test, không phải secret thật.
+    secret: dGVzdC1vbmx5LXNlY3JldC0zMi1ieXRlcy1taW5pbXVtLWxlbmd0aA==
+    access-expiration-ms: 900000
+    refresh-expiration-ms: 604800000
 
 management:
   endpoints:
@@ -19,9 +43,9 @@ management:
       show-details: always        # test fail thì thấy ngay component nào DOWN
   health:
     redis:
-      enabled: false              # Phase 0 chưa provision Redis trong test
+      enabled: true               # Phase 1: đã có Redis container trong test
     mail:
-      enabled: false              # chưa provision SMTP trong test
+      enabled: false              # SMTP bị mock trong test, health check sẽ luôn DOWN
 
 logging:
   level:

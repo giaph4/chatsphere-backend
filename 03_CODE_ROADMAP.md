@@ -31,16 +31,16 @@ Lộ trình chia thành **9 Phase**, mỗi Phase là 1 khối tính năng hoàn 
 
 ### Checklist
 
-- [ ] 0.1. Tạo `BaseEntity` (abstract class) chứa `id`, `createdAt`, `updatedAt` dùng `@MappedSuperclass` + `@EntityListeners(AuditingEntityListener.class)`.
-- [ ] 0.2. Bật `@EnableJpaAuditing` trong class cấu hình.
-- [ ] 0.3. Tạo `ApiResponse<T>` wrapper class chuẩn hóa format response (theo mục 8.1 file `01_SYSTEM_DESIGN.md`).
-- [ ] 0.4. Tạo `ErrorCode` enum liệt kê toàn bộ mã lỗi nghiệp vụ (ví dụ `USER_NOT_FOUND`, `EMAIL_ALREADY_EXISTS`, `INVALID_CREDENTIALS`...).
-- [ ] 0.5. Tạo `BusinessException` (custom exception mang `ErrorCode`) và `GlobalExceptionHandler` (`@RestControllerAdvice`) bắt exception → trả `ApiResponse` lỗi thống nhất.
-- [ ] 0.6. Cấu hình `CorsConfig` đọc từ `app.cors.allowed-origins`.
-- [ ] 0.7. Cấu hình `JacksonConfig` (format ngày giờ ISO-8601, xử lý timezone UTC nhất quán).
-- [ ] 0.8. Viết `application-test.yml` + cấu hình Testcontainers cho môi trường test (dùng Postgres container riêng, tách biệt DB dev).
-- [ ] 0.9. Tạo package structure đầy đủ theo mục 3.3 file `01_SYSTEM_DESIGN.md`.
-- [ ] 0.10. Viết test đầu tiên: `HealthCheckTest` gọi `/actuator/health` để xác nhận bộ khung chạy được qua Testcontainers.
+- [x] 0.1. Tạo `BaseEntity` (abstract class) chứa `id`, `createdAt`, `updatedAt` dùng `@MappedSuperclass` + `@EntityListeners(AuditingEntityListener.class)`.
+- [x] 0.2. Bật `@EnableJpaAuditing` trong class cấu hình.
+- [x] 0.3. Tạo `ApiResponse<T>` wrapper class chuẩn hóa format response (theo mục 8.1 file `01_SYSTEM_DESIGN.md`).
+- [x] 0.4. Tạo `ErrorCode` enum liệt kê toàn bộ mã lỗi nghiệp vụ (ví dụ `USER_NOT_FOUND`, `EMAIL_ALREADY_EXISTS`, `INVALID_CREDENTIALS`...).
+- [x] 0.5. Tạo `BusinessException` (custom exception mang `ErrorCode`) và `GlobalExceptionHandler` (`@RestControllerAdvice`) bắt exception → trả `ApiResponse` lỗi thống nhất.
+- [x] 0.6. Cấu hình `CorsConfig` đọc từ `app.cors.allowed-origins`.
+- [x] 0.7. Cấu hình `JacksonConfig` (format ngày giờ ISO-8601, xử lý timezone UTC nhất quán).
+- [x] 0.8. Viết `application-test.yml` + cấu hình Testcontainers cho môi trường test (dùng Postgres container riêng, tách biệt DB dev).
+- [x] 0.9. Tạo package structure đầy đủ theo mục 3.3 file `01_SYSTEM_DESIGN.md`.
+- [x] 0.10. Viết test đầu tiên: `HealthCheckTest` gọi `/actuator/health` để xác nhận bộ khung chạy được qua Testcontainers.
 
 **Kết quả đầu ra**: Project chạy được, có cấu trúc exception/response chuẩn, sẵn sàng thêm module nghiệp vụ.
 
@@ -52,50 +52,50 @@ Lộ trình chia thành **9 Phase**, mỗi Phase là 1 khối tính năng hoàn 
 
 ### 1.1. Entity & Migration
 
-- [ ] Viết migration `V1__create_users_table.sql`, `V10__create_refresh_tokens...sql` (có thể đổi thứ tự số hợp lý hơn nếu cần).
-- [ ] Tạo entity `User` (kế thừa `BaseEntity`), enum `UserStatus`, `UserRole`.
-- [ ] Tạo entity `RefreshToken`.
+- [x] Viết migration `V1__create_users_table.sql`, `V10__create_refresh_tokens...sql` (có thể đổi thứ tự số hợp lý hơn nếu cần).
+- [x] Tạo entity `User` (kế thừa `BaseEntity`), enum `UserStatus`, `UserRole`.
+- [x] Tạo entity `RefreshToken`.
 
 ### 1.2. Security Configuration
 
-- [ ] Tạo `JwtTokenProvider`: sinh access token, refresh token, validate token, extract claims (userId, role).
+- [x] Tạo `JwtTokenProvider`: sinh access token, refresh token, validate token, extract claims (userId, role).
   > **Lưu ý kỹ thuật quan trọng**: JWT dùng cho REST API xác thực qua `Authorization` header bình thường, nhưng JWT dùng cho WebSocket phải xác thực tại thời điểm STOMP `CONNECT` frame (xem Phase 4) — cần thiết kế `JwtTokenProvider` dùng chung được cho cả 2 luồng.
-- [ ] Tạo `CustomUserDetailsService` implement `UserDetailsService`.
-- [ ] Tạo `JwtAuthenticationFilter` (`OncePerRequestFilter`) — parse header, validate, set `SecurityContext`.
-- [ ] Tạo `SecurityConfig`: cấu hình `SecurityFilterChain`, whitelist endpoint public (`/api/v1/auth/**`, `/swagger-ui/**`), stateless session, method security (`@EnableMethodSecurity`).
-- [ ] Tạo `PasswordEncoderConfig` (BCryptPasswordEncoder, strength=12).
+- [x] Tạo `CustomUserDetailsService` implement `UserDetailsService`.
+- [x] Tạo `JwtAuthenticationFilter` (`OncePerRequestFilter`) — parse header, validate, set `SecurityContext`.
+- [x] Tạo `SecurityConfig`: cấu hình `SecurityFilterChain`, whitelist endpoint public (`/api/v1/auth/**`, `/swagger-ui/**`), stateless session, method security (`@EnableMethodSecurity`).
+- [x] Tạo `PasswordEncoderConfig` (BCryptPasswordEncoder, strength=12).
 
 ### 1.3. DTO
 
-- [ ] `RegisterRequest` (email, password, username, displayName) — validate `@Email`, `@Size(min=8)`, `@Pattern` (mật khẩu có chữ hoa/số).
-- [ ] `LoginRequest`, `LoginResponse` (accessToken, refreshToken, expiresIn).
-- [ ] `RefreshTokenRequest`.
-- [ ] `ForgotPasswordRequest`, `ResetPasswordRequest`, `ChangePasswordRequest`.
-- [ ] `VerifyEmailRequest`.
+- [x] `RegisterRequest` (email, password, username, displayName) — validate `@Email`, `@Size(min=8)`, `@Pattern` (mật khẩu có chữ hoa/số).
+- [x] `LoginRequest`, `LoginResponse` (accessToken, refreshToken, expiresIn).
+- [x] `RefreshTokenRequest`.
+- [x] `ForgotPasswordRequest`, `ResetPasswordRequest`, `ChangePasswordRequest`.
+- [x] `VerifyEmailRequest`.
 
 ### 1.4. Service Layer
 
-- [ ] `AuthService.register()`: validate email/username unique, mã hóa password, tạo user `PENDING_VERIFICATION`, sinh OTP/token xác thực, gọi `EmailService` gửi mail.
-- [ ] `AuthService.verifyEmail()`: kiểm tra token, cập nhật `status=ACTIVE`.
-- [ ] `AuthService.login()`: xác thực qua `AuthenticationManager`, kiểm tra `status=ACTIVE`, sinh cặp token, lưu `RefreshToken` (hash bằng SHA-256 trước khi lưu DB — không lưu raw token), cập nhật `lastLoginAt`.
+- [x] `AuthService.register()`: validate email/username unique, mã hóa password, tạo user `PENDING_VERIFICATION`, sinh OTP/token xác thực, gọi `EmailService` gửi mail.
+- [x] `AuthService.verifyEmail()`: kiểm tra token, cập nhật `status=ACTIVE`.
+- [x] `AuthService.login()`: xác thực qua `AuthenticationManager`, kiểm tra `status=ACTIVE`, sinh cặp token, lưu `RefreshToken` (hash bằng SHA-256 trước khi lưu DB — không lưu raw token), cập nhật `lastLoginAt`.
   > **Chống brute-force**: dùng Redis counter theo key `login_attempt:{email}`, TTL 15 phút, khóa khi >= 5 lần sai.
-- [ ] `AuthService.refresh()`: validate refresh token còn hạn + chưa revoke, sinh access token mới (+ rotation: thu hồi token cũ, cấp token mới).
-- [ ] `AuthService.logout()`: đánh dấu `revoked=true` cho refresh token.
-- [ ] `AuthService.forgotPassword()` / `resetPassword()`: sinh token reset riêng (khác JWT, dùng UUID lưu Redis TTL 15 phút).
-- [ ] `AuthService.changePassword()`: verify mật khẩu cũ, cập nhật mới, thu hồi toàn bộ refresh token cũ của user.
+- [x] `AuthService.refresh()`: validate refresh token còn hạn + chưa revoke, sinh access token mới (+ rotation: thu hồi token cũ, cấp token mới).
+- [x] `AuthService.logout()`: đánh dấu `revoked=true` cho refresh token.
+- [x] `AuthService.forgotPassword()` / `resetPassword()`: sinh token reset riêng (khác JWT, dùng UUID lưu Redis TTL 15 phút).
+- [x] `AuthService.changePassword()`: verify mật khẩu cũ, cập nhật mới, thu hồi toàn bộ refresh token cũ của user.
 
 ### 1.5. Controller
 
-- [ ] `AuthController` implement toàn bộ endpoint mục 8.2 nhóm `/auth/*`.
+- [x] `AuthController` implement toàn bộ endpoint mục 8.2 nhóm `/auth/*`.
 
 ### 1.6. Email Service
 
-- [ ] `EmailService` dùng `JavaMailSender`, template email bằng Thymeleaf (hoặc plain text đơn giản cho bản học tập).
+- [x] `EmailService` dùng `JavaMailSender`, template email bằng Thymeleaf (hoặc plain text đơn giản cho bản học tập).
 
 ### 1.7. Test
 
-- [ ] Unit test `AuthServiceTest` (Mockito) cho từng luồng chính + luồng ngoại lệ (email trùng, sai mật khẩu, token hết hạn).
-- [ ] Integration test `AuthControllerIT` (Testcontainers + MockMvc) test đầy đủ luồng đăng ký → xác thực → đăng nhập → refresh → logout.
+- [x] Unit test `AuthServiceTest` (Mockito) cho từng luồng chính + luồng ngoại lệ (email trùng, sai mật khẩu, token hết hạn).
+- [x] Integration test `AuthControllerIT` (Testcontainers + MockMvc) test đầy đủ luồng đăng ký → xác thực → đăng nhập → refresh → logout.
 
 **Kiểm tra hoàn thành Phase 1**: dùng Swagger UI hoặc Postman thực hiện được trọn vẹn: đăng ký → nhận mã OTP qua MailHog → xác thực → đăng nhập → nhận JWT → gọi 1 API bảo vệ bằng token đó thành công.
 

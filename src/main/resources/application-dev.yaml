@@ -3,8 +3,6 @@ spring:
     activate:
       on-profile: dev
 
-  # Giá trị mặc định khớp infra/docker-compose.yml — chạy được ngay không cần set biến môi trường.
-  # Muốn override: tạo file .env ở gốc repo rồi nạp vào shell (xem 02_SETUP_GUIDE.md mục 5.4).
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/chatsphere}
     username: ${DB_USERNAME:chatsphere}
@@ -13,7 +11,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate       # Flyway quản lý schema, JPA chỉ validate khớp
+      ddl-auto: validate
     show-sql: true
     open-in-view: false
     properties:
@@ -36,6 +34,9 @@ spring:
     port: ${MAIL_PORT:1025}
 
 app:
+  mail:
+    from: ${MAIL_FROM:no-reply@chatsphere.local}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
   jwt:
     secret: ${JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWNoYW5nZS1tZS0zMi1ieXRlcy1taW5pbXVtLWxlbmd0aA==}
     access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
