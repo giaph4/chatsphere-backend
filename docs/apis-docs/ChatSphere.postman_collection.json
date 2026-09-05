@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b6f2a9d0-6e1a-4b6d-9f3a-2c7a1e4d5f10",
     "name": "ChatSphere Backend",
-    "description": "Toàn bộ API Phase 0-2 (Auth, User, Friend) của ChatSphere backend.\n\nBase URL mặc định: http://localhost:8080 (biến {{base_url}}).\n\nCách dùng nhanh:\n1. Chạy folder \"Auth\" > \"Register\" rồi mở MailHog (http://localhost:8025) lấy mã OTP, dán vào body của \"Verify Email\".\n2. Chạy \"Login\" — access_token/refresh_token tự động lưu vào collection variables cho các request khác dùng.\n3. Muốn test luồng kết bạn giữa 2 người, dùng thẳng folder \"Full Flow - 2 Users (Alice & Bob)\" — mỗi bước tự chạy tuần tự và tự chuyền token/id cho bước sau.\n\nXem chi tiết từng endpoint (mã lỗi, ca biên) tại docs/apis-docs/07_API_REFERENCE_AUTH.md và 09_API_REFERENCE_USER_FRIEND.md.",
+    "description": "Toàn bộ API Phase 0-3 (Auth, User, Friend, Chat) của ChatSphere backend.\n\nBase URL mặc định: http://localhost:8080 (biến {{base_url}}).\n\nCách dùng nhanh:\n1. Chạy folder \"Auth\" > \"Register\" rồi mở MailHog (http://localhost:8025) lấy mã OTP, dán vào body của \"Verify Email\".\n2. Chạy \"Login\" — access_token/refresh_token tự động lưu vào collection variables cho các request khác dùng.\n3. Muốn test luồng kết bạn giữa 2 người, dùng thẳng folder \"Full Flow - 2 Users (Alice & Bob)\" — mỗi bước tự chạy tuần tự và tự chuyền token/id cho bước sau.\n4. Các request Phase 3 (tiền tố \"Chat -\", nằm ở gốc collection): chạy \"Chat - Create Or Get Direct Conversation\" rồi \"Chat - Send Message\" trước — test script tự lưu conversation_id/message_id cho các request Chat khác dùng.\n\nXem chi tiết từng endpoint (mã lỗi, ca biên) tại docs/apis-docs/07_API_REFERENCE_AUTH.md, 09_API_REFERENCE_USER_FRIEND.md và 11_API_REFERENCE_CHAT.md.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -32,7 +32,10 @@
     { "key": "bob_refresh_token", "value": "", "type": "string" },
     { "key": "bob_id", "value": "", "type": "string" },
     { "key": "alice_otp", "value": "", "type": "string" },
-    { "key": "bob_otp", "value": "", "type": "string" }
+    { "key": "bob_otp", "value": "", "type": "string" },
+    { "key": "conversation_id", "value": "", "type": "string", "description": "Phase 3 — tự lưu bởi test script của \"Chat - Create Or Get Direct Conversation\"" },
+    { "key": "group_conversation_id", "value": "", "type": "string", "description": "Phase 3 — tự lưu bởi test script của \"Chat - Create Group\"" },
+    { "key": "message_id", "value": "", "type": "string", "description": "Phase 3 — tự lưu bởi test script của \"Chat - Send Message\"" }
   ],
   "item": [
     {
@@ -688,6 +691,143 @@
           }
         }
       ]
+    },
+    {
+      "name": "Chat - Get My Conversations",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "url": { "raw": "{{base_url}}/api/v1/conversations?page=0&size=20", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] },
+        "description": "UC-14 — Danh sách hội thoại của tôi, mới nhất trước, kèm last_message/unread_count/participants. Xem 11_API_REFERENCE_CHAT.md §3.1."
+      }
+    },
+    {
+      "name": "Chat - Create Or Get Direct Conversation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const data = pm.response.json().data;",
+              "    pm.collectionVariables.set('conversation_id', data.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{bob_id}}\"\n}" },
+        "url": { "raw": "{{base_url}}/api/v1/conversations/direct", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "direct"] },
+        "description": "UC-14 — Tạo hội thoại 1-1, hoặc trả lại hội thoại đã có (không tạo trùng). Test script tự lưu conversation_id. Xem 11_API_REFERENCE_CHAT.md §3.2."
+      }
+    },
+    {
+      "name": "Chat - Create Group",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const data = pm.response.json().data;",
+              "    pm.collectionVariables.set('group_conversation_id', data.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Study Group\",\n  \"member_ids\": [\"{{bob_id}}\"]\n}" },
+        "url": { "raw": "{{base_url}}/api/v1/conversations/group", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "group"] },
+        "description": "UC-15 — Tạo nhóm chat, người gọi API tự động là ADMIN. Test script tự lưu group_conversation_id. Xem 11_API_REFERENCE_CHAT.md §3.3."
+      }
+    },
+    {
+      "name": "Chat - Update Group Info",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Study Group (renamed)\",\n  \"avatar_url\": null\n}" },
+        "url": { "raw": "{{base_url}}/api/v1/conversations/{{group_conversation_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "{{group_conversation_id}}"] },
+        "description": "UC-16 — Đổi tên/ảnh nhóm, chỉ ADMIN. PUT thay thế toàn bộ. Xem 11_API_REFERENCE_CHAT.md §3.4."
+      }
+    },
+    {
+      "name": "Chat - Add Member",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{target_user_id}}\"\n}" },
+        "url": { "raw": "{{base_url}}/api/v1/conversations/{{group_conversation_id}}/members", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "{{group_conversation_id}}", "members"] },
+        "description": "UC-16 — Thêm thành viên vào nhóm, chỉ ADMIN. Xem 11_API_REFERENCE_CHAT.md §3.5."
+      }
+    },
+    {
+      "name": "Chat - Remove Member",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "url": { "raw": "{{base_url}}/api/v1/conversations/{{group_conversation_id}}/members/{{target_user_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "{{group_conversation_id}}", "members", "{{target_user_id}}"] },
+        "description": "UC-16 — Xóa thành viên khỏi nhóm (soft leave), chỉ ADMIN. Xem 11_API_REFERENCE_CHAT.md §3.6."
+      }
+    },
+    {
+      "name": "Chat - Leave Group",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{bob_token}}" }],
+        "url": { "raw": "{{base_url}}/api/v1/conversations/{{group_conversation_id}}/leave", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "{{group_conversation_id}}", "leave"] },
+        "description": "UC-17 — Rời nhóm. Nếu là ADMIN cuối cùng, tự động chuyển quyền cho thành viên tham gia sớm nhất. Xem 11_API_REFERENCE_CHAT.md §3.7."
+      }
+    },
+    {
+      "name": "Chat - Send Message",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const data = pm.response.json().data;",
+              "    pm.collectionVariables.set('message_id', data.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"type\": \"TEXT\",\n  \"content\": \"Hello Bob!\",\n  \"reply_to_message_id\": null\n}" },
+        "url": { "raw": "{{base_url}}/api/v1/conversations/{{conversation_id}}/messages", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "{{conversation_id}}", "messages"] },
+        "description": "UC-18 (REST, chưa real-time) — Gửi tin nhắn vào 1 conversation. Test script tự lưu message_id. Xem 11_API_REFERENCE_CHAT.md §3.8."
+      }
+    },
+    {
+      "name": "Chat - Get Messages (cursor pagination)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "url": { "raw": "{{base_url}}/api/v1/conversations/{{conversation_id}}/messages?limit=20", "host": ["{{base_url}}"], "path": ["api", "v1", "conversations", "{{conversation_id}}", "messages"], "query": [{ "key": "limit", "value": "20" }, { "key": "cursor", "value": "", "disabled": true }] },
+        "description": "UC-18 — Lấy lịch sử tin nhắn, cursor-based pagination, mới nhất trước. Xem 11_API_REFERENCE_CHAT.md §3.9."
+      }
+    },
+    {
+      "name": "Chat - Recall Message",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+        "url": { "raw": "{{base_url}}/api/v1/messages/{{message_id}}/recall", "host": ["{{base_url}}"], "path": ["api", "v1", "messages", "{{message_id}}", "recall"] },
+        "description": "UC-20 — Thu hồi tin nhắn. Chỉ người gửi, trong vòng 5 phút kể từ lúc gửi. Xem 11_API_REFERENCE_CHAT.md §3.10."
+      }
     }
   ]
 }
