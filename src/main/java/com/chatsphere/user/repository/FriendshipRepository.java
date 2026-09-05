@@ -49,6 +49,19 @@ public interface FriendshipRepository extends JpaRepository<Friendship, UUID> {
             """)
     int deleteBetween(@Param("a") UUID a, @Param("b") UUID b);
 
+    /**
+     * Toàn bộ id bạn bè của 1 người, không phân trang — dùng ở Phase 4 khi phát trạng thái
+     * online/offline: phải gửi cho TẤT CẢ bạn bè chứ không phải trang đầu tiên.
+     * <p>Chỉ trả UUID (không load entity): danh sách này được duyệt mỗi lần có người
+     * kết nối/ngắt kết nối, load cả entity User sẽ rất phí.
+     */
+    @Query("""
+            SELECT CASE WHEN f.user1.id = :me THEN f.user2.id ELSE f.user1.id END
+            FROM Friendship f
+            WHERE f.user1.id = :me OR f.user2.id = :me
+            """)
+    Set<UUID> findFriendIdsOf(@Param("me") UUID me);
+
     /** Trong trang kết quả tìm kiếm, ai đã là bạn tôi — 1 query cho cả trang. */
     @Query("""
             SELECT CASE WHEN f.user1.id = :me THEN f.user2.id ELSE f.user1.id END

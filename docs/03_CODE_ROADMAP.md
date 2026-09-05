@@ -145,31 +145,31 @@ Lộ trình chia thành **9 Phase**, mỗi Phase là 1 khối tính năng hoàn 
 
 ### 3.1. Entity & Migration
 
-- [ ] `Conversation`, `ConversationParticipant`, `Message` (chưa cần `MessageAttachment`, `MessageReaction` — thêm ở Phase 5).
+- [x] `Conversation`, `ConversationParticipant`, `Message` (chưa cần `MessageAttachment`, `MessageReaction` — thêm ở Phase 5).
 
 ### 3.2. DTO & Mapper
 
-- [ ] `ConversationResponse` (kèm `lastMessage`, `unreadCount`, danh sách participant rút gọn).
-- [ ] `CreateGroupRequest`, `UpdateGroupRequest`, `MessageResponse`, `SendMessageRequest`.
+- [x] `ConversationResponse` (kèm `lastMessage`, `unreadCount`, danh sách participant rút gọn).
+- [x] `CreateGroupRequest`, `UpdateGroupRequest`, `MessageResponse`, `SendMessageRequest`.
 
 ### 3.3. Service Layer
 
-- [ ] `ConversationService.getOrCreateDirectConversation(userId1, userId2)`: kiểm tra đã tồn tại chưa trước khi tạo mới (tránh trùng lặp).
-- [ ] `ConversationService.createGroup()`: tạo conversation + participant cho từng thành viên, người tạo là `ADMIN`.
-- [ ] `ConversationService.getMyConversations(pageable)`: sắp xếp theo `updatedAt DESC`, tính `unreadCount` cho từng conversation.
-- [ ] `ConversationService.addMember()`, `removeMember()`, `updateGroupInfo()` — kiểm tra quyền `ADMIN`.
-- [ ] `ConversationService.leaveGroup()`: xử lý case admin cuối cùng rời nhóm (tự động chuyển quyền — theo UC-17).
-- [ ] `MessageService.sendMessage()`: validate người gửi là participant hợp lệ + chưa bị block bởi bất kỳ ai trong conversation (với DIRECT) → lưu message → cập nhật `conversation.lastMessageId/updatedAt`.
-- [ ] `MessageService.getMessages(conversationId, cursor, limit)`: cursor-based pagination theo `createdAt`.
-- [ ] `MessageService.recallMessage()`: kiểm tra quyền sở hữu + thời gian (< 5 phút).
+- [x] `ConversationService.getOrCreateDirectConversation(userId1, userId2)`: kiểm tra đã tồn tại chưa trước khi tạo mới (tránh trùng lặp).
+- [x] `ConversationService.createGroup()`: tạo conversation + participant cho từng thành viên, người tạo là `ADMIN`.
+- [x] `ConversationService.getMyConversations(pageable)`: sắp xếp theo `updatedAt DESC`, tính `unreadCount` cho từng conversation.
+- [x] `ConversationService.addMember()`, `removeMember()`, `updateGroupInfo()` — kiểm tra quyền `ADMIN`.
+- [x] `ConversationService.leaveGroup()`: xử lý case admin cuối cùng rời nhóm (tự động chuyển quyền — theo UC-17).
+- [x] `MessageService.sendMessage()`: validate người gửi là participant hợp lệ + chưa bị block bởi bất kỳ ai trong conversation (với DIRECT) → lưu message → cập nhật `conversation.lastMessageId/updatedAt`.
+- [x] `MessageService.getMessages(conversationId, cursor, limit)`: cursor-based pagination theo `createdAt`.
+- [x] `MessageService.recallMessage()`: kiểm tra quyền sở hữu + thời gian (< 5 phút).
 
 ### 3.4. Controller
 
-- [ ] `ConversationController`, `MessageController` theo mục 8.2.
+- [x] `ConversationController`, `MessageController` theo mục 8.2.
 
 ### 3.5. Test
 
-- [ ] Test đầy đủ luồng: tạo group 3 người → gửi tin nhắn → lấy lịch sử phân trang → thu hồi tin nhắn → rời nhóm.
+- [x] Test đầy đủ luồng: tạo group 3 người → gửi tin nhắn → lấy lịch sử phân trang → thu hồi tin nhắn → rời nhóm.
 
 **Kiểm tra hoàn thành Phase 3**: toàn bộ luồng chat hoạt động đúng qua REST (chưa real-time — người nhận phải tự gọi lại API để thấy tin nhắn mới, đây là hành vi mong đợi ở Phase này).
 
@@ -181,22 +181,22 @@ Lộ trình chia thành **9 Phase**, mỗi Phase là 1 khối tính năng hoàn 
 
 ### 4.1. WebSocket Configuration
 
-- [ ] `WebSocketConfig` implement `WebSocketMessageBrokerConfigurer`:
+- [x] `WebSocketConfig` implement `WebSocketMessageBrokerConfigurer`:
   - `registerStompEndpoints()`: đăng ký `/ws` với SockJS fallback.
   - `configureMessageBroker()`: bật simple broker cho `/topic`, `/queue`, prefix ứng dụng `/app`, prefix user destination `/user`.
-- [ ] `WebSocketAuthInterceptor` (implement `ChannelInterceptor`): bắt `StompCommand.CONNECT`, extract JWT từ header, validate, set `Principal`.
+- [x] `WebSocketAuthInterceptor` (implement `ChannelInterceptor`): bắt `StompCommand.CONNECT`, extract JWT từ header, validate, set `Principal`.
   > **Điểm học thuật quan trọng**: STOMP over WebSocket không tự động gửi HTTP header như REST — JWT phải được client gửi trong native STOMP header của frame `CONNECT`, xử lý ở tầng `ChannelInterceptor` chứ không phải filter HTTP thông thường.
-- [ ] Đăng ký interceptor vào `configureClientInboundChannel()`.
+- [x] Đăng ký interceptor vào `configureClientInboundChannel()`.
 
 ### 4.2. Presence Module (Redis)
 
-- [ ] `PresenceService`: lưu `userId -> Set<sessionId>` trong Redis (1 user có thể mở nhiều tab/thiết bị).
-- [ ] `WebSocketEventListener` lắng nghe `SessionConnectedEvent` (thêm mapping, publish online) và `SessionDisconnectEvent` (xóa mapping, nếu hết session thì publish offline — debounce ~10s theo thiết kế mục 9.1 file 01).
-- [ ] Publish trạng thái online/offline đến `/user/{friendId}/queue/presence` cho từng bạn bè (chỉ gửi cho bạn bè, tôn trọng cài đặt `online_visibility` từ UC-13).
+- [x] `PresenceService`: lưu `userId -> Set<sessionId>` trong Redis (1 user có thể mở nhiều tab/thiết bị).
+- [x] `WebSocketEventListener` lắng nghe `SessionConnectedEvent` (thêm mapping, publish online) và `SessionDisconnectEvent` (xóa mapping, nếu hết session thì publish offline — debounce ~10s theo thiết kế mục 9.1 file 01).
+- [x] Publish trạng thái online/offline đến `/user/{friendId}/queue/presence` cho từng bạn bè (chỉ gửi cho bạn bè, tôn trọng cài đặt `online_visibility` từ UC-13).
 
 ### 4.3. Chat Real-time Controller
 
-- [ ] `ChatWebSocketController`:
+- [x] `ChatWebSocketController`:
   - `@MessageMapping("/chat.sendMessage")`: nhận `SendMessageRequest`, gọi lại `MessageService.sendMessage()` (tái sử dụng Phase 3), sau đó `simpMessagingTemplate.convertAndSend("/topic/conversation/{id}", messageResponse)`.
   - `@MessageMapping("/chat.typing")`: broadcast `TypingEvent` đến các thành viên khác (không lưu DB).
   - `@MessageMapping("/chat.markRead")`: cập nhật `lastReadMessageId`, broadcast `READ` receipt.
@@ -210,7 +210,7 @@ Lộ trình chia thành **9 Phase**, mỗi Phase là 1 khối tính năng hoàn 
 
 ### 4.5. Test
 
-- [ ] Test WebSocket bằng `WebSocketStompClient` trong integration test (giả lập 2 client kết nối, gửi tin nhắn, xác nhận cả 2 đều nhận được qua topic).
+- [x] Test WebSocket bằng `WebSocketStompClient` trong integration test (giả lập 2 client kết nối, gửi tin nhắn, xác nhận cả 2 đều nhận được qua topic).
 
 **Kiểm tra hoàn thành Phase 4**: mở 2 trình duyệt (hoặc 2 tab ẩn danh) đăng nhập 2 tài khoản khác nhau, nhắn tin qua lại thấy hiển thị ngay lập tức không cần F5, thấy trạng thái online và "đang soạn tin" hoạt động đúng.
 
@@ -222,35 +222,35 @@ Lộ trình chia thành **9 Phase**, mỗi Phase là 1 khối tính năng hoàn 
 
 ### 5.1. Media Module
 
-- [ ] `MinioConfig`: khởi tạo `MinioClient` bean, tự tạo bucket nếu chưa tồn tại khi ứng dụng start.
-- [ ] `MediaService.uploadFile()`: validate MIME type qua magic byte (dùng thư viện `Apache Tika`), giới hạn kích thước theo loại file, generate tên file unique (UUID + extension), upload lên MinIO, trả về URL.
-- [ ] `MediaController`: endpoint `/api/v1/media/upload`.
-- [ ] Cập nhật `MessageService` hỗ trợ `type=IMAGE/FILE/VOICE` kèm `MessageAttachment`.
-- [ ] Entity `MessageAttachment`, `MessageReaction`, `MessageDeletion` + migration tương ứng.
-- [ ] `MessageService.addReaction()`, `forwardMessage()`, `deleteForMe()`.
+- [x] `MinioConfig`: khởi tạo `MinioClient` bean, tự tạo bucket nếu chưa tồn tại khi ứng dụng start.
+- [x] `MediaService.uploadFile()`: validate MIME type qua magic byte (dùng thư viện `Apache Tika`), giới hạn kích thước theo loại file, generate tên file unique (UUID + extension), upload lên MinIO, trả về URL.
+- [x] `MediaController`: endpoint `/api/v1/media/upload`.
+- [x] Cập nhật `MessageService` hỗ trợ `type=IMAGE/FILE/VOICE` kèm `MessageAttachment`.
+- [x] Entity `MessageAttachment`, `MessageReaction`, `MessageDeletion` + migration tương ứng.
+- [x] `MessageService.addReaction()`, `forwardMessage()`, `deleteForMe()`.
 
 ### 5.2. Notification Module
 
-- [ ] Entity `Notification` + migration.
-- [ ] `NotificationService.create()`: tạo record + gửi qua `/user/{userId}/queue/notifications` nếu đang online.
-- [ ] Dùng Spring Event: `MessageSentEvent` → `NotificationEventListener` xử lý bất đồng bộ (`@Async` + `@EventListener`) tạo notification cho thành viên offline/không mở đúng conversation — tách rời khỏi luồng gửi tin nhắn chính (không làm chậm response gửi tin).
-- [ ] `NotificationController`: lấy danh sách, đánh dấu đã đọc.
+- [x] Entity `Notification` + migration.
+- [x] `NotificationService.create()`: tạo record + gửi qua `/user/{userId}/queue/notifications` nếu đang online.
+- [x] Dùng Spring Event: `MessageSentEvent` → `NotificationEventListener` xử lý bất đồng bộ (`@Async` + `@EventListener`) tạo notification cho thành viên offline/không mở đúng conversation — tách rời khỏi luồng gửi tin nhắn chính (không làm chậm response gửi tin).
+- [x] `NotificationController`: lấy danh sách, đánh dấu đã đọc.
 
 ### 5.3. Web Push Notification
 
-- [ ] Sinh cặp khóa VAPID (`web-push` library có tool generate).
-- [ ] Entity `PushSubscription` + migration.
-- [ ] `PushNotificationService.send()`: dùng thư viện `web-push` gửi đến endpoint trình duyệt.
+- [x] Sinh cặp khóa VAPID (`web-push` library có tool generate).
+- [x] Entity `PushSubscription` + migration.
+- [x] `PushNotificationService.send()`: dùng thư viện `web-push` gửi đến endpoint trình duyệt.
 - [ ] Frontend: đăng ký Service Worker (`sw.js`), xin quyền notification, subscribe push, gửi subscription lên server.
 
 ### 5.4. Mute Conversation
 
-- [ ] `ConversationService.muteConversation(conversationId, until)`: cập nhật `mutedUntil` — `NotificationEventListener` kiểm tra field này trước khi gửi.
+- [x] `ConversationService.muteConversation(conversationId, until)`: cập nhật `mutedUntil` — `NotificationEventListener` kiểm tra field này trước khi gửi.
 
 ### 5.5. Test
 
-- [ ] Test upload file với file giả mạo extension (đổi đuôi `.exe` thành `.jpg`) → xác nhận bị chặn bởi kiểm tra magic byte.
-- [ ] Test notification không được tạo khi conversation đang bị mute.
+- [x] Test upload file với file giả mạo extension (đổi đuôi `.exe` thành `.jpg`) → xác nhận bị chặn bởi kiểm tra magic byte.
+- [x] Test notification không được tạo khi conversation đang bị mute.
 
 **Kiểm tra hoàn thành Phase 5**: gửi được ảnh/file trong chat, thả reaction thấy cập nhật realtime, nhận được thông báo trình duyệt khi đóng tab (Web Push).
 

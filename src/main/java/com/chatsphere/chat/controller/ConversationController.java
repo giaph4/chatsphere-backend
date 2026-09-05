@@ -4,6 +4,7 @@ import com.chatsphere.chat.dto.AddMemberRequest;
 import com.chatsphere.chat.dto.ConversationResponse;
 import com.chatsphere.chat.dto.CreateDirectConversationRequest;
 import com.chatsphere.chat.dto.CreateGroupRequest;
+import com.chatsphere.chat.dto.MuteConversationRequest;
 import com.chatsphere.chat.dto.UpdateGroupRequest;
 import com.chatsphere.chat.service.ConversationService;
 import com.chatsphere.common.ApiResponse;
@@ -86,6 +87,16 @@ public class ConversationController {
             @PathVariable UUID id,
             @PathVariable UUID userId) {
         conversationService.removeMember(currentUserId, id, userId);
+        return ApiResponse.ok();
+    }
+
+    @PutMapping("/{id}/mute")
+    @Operation(summary = "Tắt thông báo hội thoại tới thời điểm chỉ định — gửi null để bật lại")
+    public ApiResponse<Void> muteConversation(
+            @AuthenticationPrincipal UUID currentUserId,
+            @PathVariable UUID id,
+            @RequestBody MuteConversationRequest request) {
+        conversationService.muteConversation(currentUserId, id, request.mutedUntil());
         return ApiResponse.ok();
     }
 

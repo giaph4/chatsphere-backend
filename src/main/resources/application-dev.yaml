@@ -66,6 +66,16 @@ app:
     access-key: ${MINIO_ACCESS_KEY:chatsphere_admin}
     secret-key: ${MINIO_SECRET_KEY:minio_dev_password}
     bucket: ${MINIO_BUCKET:chatsphere-media}
+    # Địa chỉ TRÌNH DUYỆT dùng để tải file. Local thì trùng endpoint; chạy trong Docker,
+    # backend gọi http://minio:9000 còn trình duyệt phải đi qua tên miền công khai.
+    public-url: ${MINIO_PUBLIC_URL:}
+  push:
+    # Mặc định TẮT: dev không cần Web Push vẫn chạy đủ chat + thông báo trong app.
+    # Bật lên: sinh cặp khóa bằng `npx web-push generate-vapid-keys` rồi điền vào .env.
+    enabled: ${PUSH_ENABLED:false}
+    public-key: ${VAPID_PUBLIC_KEY:}
+    private-key: ${VAPID_PRIVATE_KEY:}
+    subject: ${VAPID_SUBJECT:mailto:no-reply@chatsphere.local}
   turn:
     secret: ${TURN_SECRET:change_this_turn_shared_secret}
     server-url: ${TURN_SERVER_URL:turn:localhost:3478}

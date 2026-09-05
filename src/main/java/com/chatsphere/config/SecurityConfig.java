@@ -35,7 +35,13 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
             "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
-            "/actuator/health"
+            "/actuator/health",
+            // Handshake WebSocket (Phase 4). "permitAll" ở đây KHÔNG có nghĩa là để ngỏ:
+            // trình duyệt không cho gắn Authorization header vào handshake, nên bắt buộc
+            // phải mở cửa bước bắt tay rồi xác thực JWT ở frame STOMP CONNECT ngay sau đó
+            // (WebSocketAuthInterceptor). Phiên không CONNECT hợp lệ thì bị đóng, không
+            // subscribe/gửi được gì.
+            "/ws/**"
     };
 
     @Bean

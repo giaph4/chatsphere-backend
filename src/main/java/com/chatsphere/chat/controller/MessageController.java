@@ -1,6 +1,8 @@
 package com.chatsphere.chat.controller;
 
+import com.chatsphere.chat.dto.ForwardMessageRequest;
 import com.chatsphere.chat.dto.MessageResponse;
+import com.chatsphere.chat.dto.ReactionRequest;
 import com.chatsphere.chat.dto.SendMessageRequest;
 import com.chatsphere.chat.service.MessageService;
 import com.chatsphere.common.ApiResponse;
@@ -53,5 +55,36 @@ public class MessageController {
             @AuthenticationPrincipal UUID currentUserId,
             @PathVariable UUID id) {
         return ApiResponse.success(messageService.recallMessage(currentUserId, id));
+    }
+
+    // ---------- Phase 5 ----------
+
+    @PutMapping("/api/v1/messages/{id}/reactions")
+    @Operation(summary = "Thả cảm xúc — gửi lại đúng emoji đang có nghĩa là gỡ (toggle)")
+    public ApiResponse<MessageResponse> react(
+            @AuthenticationPrincipal UUID currentUserId,
+            @PathVariable UUID id,
+            @Valid @RequestBody ReactionRequest request) {
+        return ApiResponse.success(messageService.reactToMessage(currentUserId, id, request.emoji()));
+    }
+
+    @PostMapping("/api/v1/messages/{id}/forward")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Chuyển tiếp tin nhắn sang hội thoại khác — sao chép nội dung, không trỏ tin gốc")
+    public ApiResponse<MessageResponse> forward(
+            @AuthenticationPrincipal UUID currentUserId,
+            @PathVariable UUID id,
+            @Valid @RequestBody ForwardMessageRequest request) {
+        return ApiResponse.success(
+                messageService.forwardMessage(currentUserId, id, request.targetConversationId()));
+    }
+
+    @DeleteMapping("/api/v1/messages/{id}/for-me")
+    @Operation(summary = "Ẩn tin nhắn khỏi phía mình — người khác vẫn thấy bình thường")
+    public ApiResponse<Void> deleteForMe(
+            @AuthenticationPrincipal UUID currentUserId,
+            @PathVariable UUID id) {
+        messageService.deleteForMe(currentUserId, id);
+        return ApiResponse.ok();
     }
 }
