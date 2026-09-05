@@ -76,6 +76,12 @@ app:
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
     bucket: ${MINIO_BUCKET}
+    public-url: ${MINIO_PUBLIC_URL}
+  push:
+    enabled: ${PUSH_ENABLED:true}
+    public-key: ${VAPID_PUBLIC_KEY}
+    private-key: ${VAPID_PRIVATE_KEY}
+    subject: ${VAPID_SUBJECT}
   turn:
     secret: ${TURN_SECRET}
     server-url: ${TURN_SERVER_URL}

@@ -197,6 +197,28 @@ public class ConversationService {
                 });
     }
 
+    // ---------- Tắt thông báo hội thoại (Phase 5 — UC-27) ----------
+
+    /**
+     * Tắt thông báo của 1 hội thoại tới thời điểm {@code until}; {@code null} nghĩa là BẬT LẠI.
+     *
+     * <p>Lưu mốc thời gian hết hạn thay vì cờ boolean: người dùng chọn "tắt 8 tiếng" thì hệ
+     * thống phải tự bật lại, không bắt họ nhớ quay lại mở. Với cờ boolean ta sẽ cần thêm một job
+     * quét định kỳ để bật lại — còn ở đây, chỉ cần so sánh {@code mutedUntil <= now} ngay trong
+     * câu truy vấn chọn người nhận thông báo ({@code findNotifiableUserIds}).
+     *
+     * <p>Mute là cài đặt của TỪNG người trên hội thoại chung (nằm ở {@code conversation_participants}),
+     * nên tắt thông báo không hề ảnh hưởng tới người khác trong nhóm.
+     */
+    @Transactional
+    public void muteConversation(UUID userId, UUID conversationId, Instant until) {
+        ConversationParticipant participant = getActiveParticipantOrThrow(conversationId, userId);
+        if (until != null && until.isBefore(Instant.now())) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Thời điểm tắt thông báo phải ở tương lai");
+        }
+        participant.setMutedUntil(until);
+    }
+
     // ---------- helper dùng chung với MessageService ----------
 
     Conversation getConversationOrThrow(UUID conversationId) {

@@ -21,6 +21,7 @@
 		<lombok.version>1.18.42</lombok.version>
 		<lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
 		<minio.version>8.5.17</minio.version>
+		<tika.version>3.2.3</tika.version>
 		<springdoc.version>3.1.0</springdoc.version>
 		<web-push.version>5.1.2</web-push.version>
 		<testcontainers.version>1.21.4</testcontainers.version>
@@ -127,6 +128,17 @@
 			<version>${minio.version}</version>
 		</dependency>
 
+		<!--
+			Apache Tika — nhận diện kiểu file THẬT bằng magic byte (Phase 5 mục 5.1).
+			Chỉ lấy tika-core: nó đã chứa toàn bộ bảng chữ ký MIME, không kéo theo hàng chục
+			parser (PDFBox, POI...) mà ta không hề trích xuất nội dung file.
+		-->
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>${tika.version}</version>
+		</dependency>
+
 		<!-- OpenAPI / Swagger UI — bản 3.x tương thích Spring Boot 4 -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -139,6 +151,24 @@
 			<groupId>nl.martijndwars</groupId>
 			<artifactId>web-push</artifactId>
 			<version>${web-push.version}</version>
+		</dependency>
+		<!--
+			web-push khai httpasyncclient và jose4j ở scope RUNTIME. Trình biên dịch vẫn cần
+			hai thư viện này để gọi được PushService.send(): kiểu trả về của nó là
+			org.apache.http.HttpResponse, còn mệnh đề throws có org.jose4j.lang.JoseException.
+			Khai tường minh ở scope mặc định (compile) để đọc được HTTP status — 404/410 là tín
+			hiệu DUY NHẤT cho biết một push subscription đã chết và cần xóa khỏi DB.
+			Version cố định đúng bằng bản web-push kéo về, tránh lệch phiên bản giữa 2 tầng.
+		-->
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>4.4.16</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bitbucket.b_c</groupId>
+			<artifactId>jose4j</artifactId>
+			<version>0.7.9</version>
 		</dependency>
 
 		<dependency>

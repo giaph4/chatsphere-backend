@@ -29,6 +29,25 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             @Param("conversationIds") Collection<UUID> conversationIds);
 
     /**
+     * Ai trong hội thoại này cần được tạo thông báo cho 1 tin nhắn mới (Phase 5 mục 5.2):
+     * còn active, KHÔNG phải người gửi, và KHÔNG đang tắt thông báo hội thoại (UC-27).
+     *
+     * <p>Trả thẳng UUID thay vì entity là chủ ý: listener chạy trên luồng nền, ngoài transaction
+     * — chạm vào quan hệ LAZY ở đó sẽ ném {@code LazyInitializationException}. Lọc mute ngay
+     * trong SQL cũng đảm bảo hội thoại đang mute không tốn một vòng lặp nào ở tầng Java.
+     */
+    @Query("""
+            SELECT p.user.id FROM ConversationParticipant p
+            WHERE p.conversation.id = :conversationId
+              AND p.leftAt IS NULL
+              AND p.user.id <> :senderId
+              AND (p.mutedUntil IS NULL OR p.mutedUntil <= :now)
+            """)
+    List<UUID> findNotifiableUserIds(@Param("conversationId") UUID conversationId,
+                                     @Param("senderId") UUID senderId,
+                                     @Param("now") java.time.Instant now);
+
+    /**
      * Sớm nhất tham gia trước — phục vụ UC-17: admin cuối cùng rời nhóm thì chuyển quyền cho người này.
      */
     List<ConversationParticipant> findByConversationIdAndLeftAtIsNullOrderByJoinedAtAsc(UUID conversationId);

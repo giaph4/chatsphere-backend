@@ -22,6 +22,16 @@ spring:
     port: 1025                    # test @MockitoBean nó đi, không có kết nối SMTP thật nào
 
 app:
+  minio:
+    # Không có MinIO container trong test: MinioBucketInitializer log lỗi rồi bỏ qua đúng như
+    # thiết kế, còn MediaService được @MockitoBean ở test nào cần. Giá trị ở đây chỉ để
+    # MinioProperties bind được và để assertManagedUrl có tiền tố ổn định mà kiểm tra.
+    endpoint: http://localhost:9000
+    access-key: test
+    secret-key: test12345
+    bucket: chatsphere-test
+  push:
+    enabled: false              # không gọi ra mạng ngoài trong test
   mail:
     from: no-reply@chatsphere.test
   frontend-url: http://localhost:5173

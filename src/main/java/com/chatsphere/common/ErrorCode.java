@@ -51,7 +51,26 @@ public enum ErrorCode {
     MESSAGE_RECALL_FORBIDDEN(HttpStatus.FORBIDDEN, "Chỉ người gửi mới được thu hồi tin nhắn"),
     MESSAGE_ALREADY_RECALLED(HttpStatus.CONFLICT, "Tin nhắn đã được thu hồi trước đó"),
     MESSAGE_RECALL_WINDOW_EXPIRED(HttpStatus.CONFLICT, "Đã quá thời gian cho phép thu hồi tin nhắn (5 phút)"),
-    MESSAGE_NOT_IN_CONVERSATION(HttpStatus.BAD_REQUEST, "Tin nhắn được reply không thuộc cuộc trò chuyện này");
+    MESSAGE_NOT_IN_CONVERSATION(HttpStatus.BAD_REQUEST, "Tin nhắn được reply không thuộc cuộc trò chuyện này"),
+
+    // ---------- Real-time / WebSocket (Phase 4 — UC-18, UC-24) ----------
+    // HttpStatus ở đây KHÔNG dùng để set mã HTTP (STOMP không có khái niệm này) — chỉ giữ để
+    // ErrorCode có duy nhất một hình dạng, và để cùng mã lỗi dùng lại được ở REST khi cần.
+    WEBSOCKET_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Kết nối WebSocket thiếu token hoặc token không hợp lệ"),
+    WEBSOCKET_SUBSCRIPTION_DENIED(HttpStatus.FORBIDDEN, "Bạn không được phép theo dõi kênh này"),
+
+    // ---------- Media & Notification (Phase 5 — UC-19, UC-22, UC-23, UC-26..UC-28) ----------
+    FILE_EMPTY(HttpStatus.BAD_REQUEST, "Chưa chọn file hoặc file rỗng"),
+    FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "File vượt quá dung lượng cho phép"),
+    // Thông báo cố ý nói rõ "định dạng thật": người dùng đổi đuôi file vì tưởng lách được cần
+    // hiểu vì sao bị chặn, còn kẻ cố tình thì dù sao cũng đã biết mình vừa làm gì.
+    FILE_TYPE_NOT_ALLOWED(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Định dạng file thật không được phép"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Tải file lên thất bại, vui lòng thử lại"),
+    MESSAGE_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "Tin nhắn phải có nội dung hoặc tệp đính kèm"),
+    ATTACHMENT_REQUIRED(HttpStatus.BAD_REQUEST, "Loại tin nhắn này bắt buộc phải có tệp đính kèm"),
+    INVALID_EMOJI(HttpStatus.BAD_REQUEST, "Biểu tượng cảm xúc không hợp lệ"),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo"),
+    PUSH_SUBSCRIPTION_INVALID(HttpStatus.BAD_REQUEST, "Thông tin đăng ký push notification không hợp lệ");
 
     private final HttpStatus status;
     private final String defaultMessage;
