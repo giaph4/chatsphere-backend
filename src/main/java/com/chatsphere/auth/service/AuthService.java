@@ -68,6 +68,35 @@ public class AuthService {
                 new EmailVerificationRequestedEvent(email, user.getDisplayName(), otp));
     }
 
+    /**
+     * Gửi lại OTP xác thực. Cần thiết vì {@code EmailService} nuốt lỗi SMTP (không làm sập luồng
+     * đăng ký) — không có endpoint này, user đăng ký lúc mail server hỏng sẽ kẹt vĩnh viễn:
+     * email đã chiếm chỗ trong bảng users mà không có cách nào lấy được mã.
+     * <p>Giống {@link #forgotPassword}, hàm này KHÔNG tiết lộ email có tồn tại hay không:
+     * email lạ hoặc đã xác thực rồi đều trả về im lặng, controller luôn trả 200.
+     * Riêng lỗi vượt hạn mức thì trả 429 — hạn mức tính theo email bất kể email có thật hay không,
+     * nên vẫn không rò rỉ thông tin.
+     */
+    @Transactional(readOnly = true)
+    public void resendVerificationOtp(ResendOtpRequest request) {
+        String email = normalizeEmail(request.email());
+
+        // Xin quota TRƯỚC khi tra DB → thời gian phản hồi không phụ thuộc email có tồn tại hay không.
+        if (!tokenStore.tryAcquireOtpResend(email)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_OTP_REQUESTS);
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null || user.getStatus() != UserStatus.PENDING_VERIFICATION) {
+            log.debug("resendOtp bỏ qua: email không tồn tại hoặc đã xác thực");
+            return;
+        }
+
+        String otp = tokenStore.issueEmailOtp(email); // cấp mã MỚI, mã cũ bị ghi đè
+        eventPublisher.publishEvent(
+                new EmailVerificationRequestedEvent(email, user.getDisplayName(), otp));
+    }
+
     @Transactional
     public void verifyEmail(VerifyEmailRequest request) {
         String email = normalizeEmail(request.email());

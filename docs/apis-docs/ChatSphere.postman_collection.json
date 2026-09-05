@@ -1,0 +1,693 @@
+{
+  "info": {
+    "_postman_id": "b6f2a9d0-6e1a-4b6d-9f3a-2c7a1e4d5f10",
+    "name": "ChatSphere Backend",
+    "description": "Toàn bộ API Phase 0-2 (Auth, User, Friend) của ChatSphere backend.\n\nBase URL mặc định: http://localhost:8080 (biến {{base_url}}).\n\nCách dùng nhanh:\n1. Chạy folder \"Auth\" > \"Register\" rồi mở MailHog (http://localhost:8025) lấy mã OTP, dán vào body của \"Verify Email\".\n2. Chạy \"Login\" — access_token/refresh_token tự động lưu vào collection variables cho các request khác dùng.\n3. Muốn test luồng kết bạn giữa 2 người, dùng thẳng folder \"Full Flow - 2 Users (Alice & Bob)\" — mỗi bước tự chạy tuần tự và tự chuyền token/id cho bước sau.\n\nXem chi tiết từng endpoint (mã lỗi, ca biên) tại docs/apis-docs/07_API_REFERENCE_AUTH.md và 09_API_REFERENCE_USER_FRIEND.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "mailhog_url", "value": "http://localhost:8025", "type": "string", "description": "Chỉ dùng để tự động lấy OTP khi test ở dev — KHÔNG tồn tại ở production" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
+    { "key": "target_user_id", "value": "", "type": "string", "description": "id của người khác để test search/block/friend-request" },
+    { "key": "friend_request_id", "value": "", "type": "string" },
+    { "key": "reset_token", "value": "", "type": "string", "description": "dán token lấy từ mail forgot-password (MailHog)" },
+    { "key": "otp", "value": "", "type": "string", "description": "dán mã 6 số lấy từ MailHog (http://localhost:8025)" },
+    { "key": "email", "value": "tester@example.com", "type": "string" },
+    { "key": "username", "value": "tester", "type": "string" },
+    { "key": "password", "value": "Password1", "type": "string" },
+    { "key": "display_name", "value": "Tester", "type": "string" },
+    { "key": "alice_email", "value": "alice.postman@test.local", "type": "string" },
+    { "key": "alice_username", "value": "alice_postman", "type": "string" },
+    { "key": "alice_password", "value": "Password1", "type": "string" },
+    { "key": "alice_token", "value": "", "type": "string" },
+    { "key": "alice_refresh_token", "value": "", "type": "string" },
+    { "key": "alice_id", "value": "", "type": "string" },
+    { "key": "bob_email", "value": "bob.postman@test.local", "type": "string" },
+    { "key": "bob_username", "value": "bob_postman", "type": "string" },
+    { "key": "bob_password", "value": "Password1", "type": "string" },
+    { "key": "bob_token", "value": "", "type": "string" },
+    { "key": "bob_refresh_token", "value": "", "type": "string" },
+    { "key": "bob_id", "value": "", "type": "string" },
+    { "key": "alice_otp", "value": "", "type": "string" },
+    { "key": "bob_otp", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "9 endpoint — 8/9 public, chỉ change-password cần Bearer token. Xem 07_API_REFERENCE_AUTH.md.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"username\": \"{{username}}\",\n  \"display_name\": \"{{display_name}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "register"] },
+            "description": "201 Created. Tạo user status=PENDING_VERIFICATION, gửi OTP qua email (MailHog: http://localhost:8025)."
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/resend-otp", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "resend-otp"] },
+            "description": "Luôn trả 200 dù email không tồn tại. Giới hạn 60s/lần, 3 lần/giờ -> quá thì 429 TOO_MANY_OTP_REQUESTS."
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"{{otp}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/verify-email", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "verify-email"] },
+            "description": "Lấy mã 6 số từ MailHog (http://localhost:8025) rồi dán vào biến collection {{otp}} trước khi Send."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) {",
+                  "    pm.collectionVariables.set('access_token', json.data.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', json.data.refresh_token);",
+                  "    console.log('Đã lưu access_token/refresh_token vào collection variables');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "login"] },
+            "description": "200 OK -> access_token (15'), refresh_token (7 ngày). Test script tự lưu cả 2 vào collection variables."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) {",
+                  "    pm.collectionVariables.set('access_token', json.data.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', json.data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/refresh", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "refresh"] },
+            "description": "Rotation: refresh_token cũ bị thu hồi ngay. Gọi lại với token cũ -> 401 INVALID_REFRESH_TOKEN và hủy TOÀN BỘ phiên (token reuse detection)."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/logout", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "logout"] },
+            "description": "Idempotent — luôn 200 kể cả token đã hết hạn/không tồn tại."
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/forgot-password", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "forgot-password"] },
+            "description": "LUÔN trả 200 dù email không tồn tại (chống dò email). Lấy token reset từ link trong mail (MailHog), dán vào biến {{reset_token}}."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{reset_token}}\",\n  \"new_password\": \"NewPassword9\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/reset-password", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "reset-password"] },
+            "description": "Token dùng đúng 1 lần, TTL 15'. Thành công sẽ thu hồi toàn bộ refresh token của user."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"old_password\": \"{{password}}\",\n  \"new_password\": \"NewPassword9\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/change-password", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "change-password"] },
+            "description": "Endpoint DUY NHẤT trong Auth cần Bearer token. Thu hồi toàn bộ refresh token sau khi đổi."
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "description": "8 endpoint — TOÀN BỘ yêu cầu Bearer token. Xem 09_API_REFERENCE_USER_FRIEND.md.",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) { pm.collectionVariables.set('user_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/me", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "me"] },
+            "description": "Hồ sơ ĐẦY ĐỦ của chính mình (có email). Test script tự lưu id vào {{user_id}}."
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"display_name\": \"{{display_name}}\",\n  \"bio\": \"Học ChatSphere mỗi ngày\",\n  \"date_of_birth\": \"2000-01-15\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/users/me", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "me"] },
+            "description": "PUT thay thế TOÀN BỘ — null ở bio/date_of_birth nghĩa là XÓA giá trị, không phải giữ nguyên. Luôn gửi đủ 3 field."
+          }
+        },
+        {
+          "name": "Get User By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/{{target_user_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "{{target_user_id}}"] },
+            "description": "Hồ sơ RÚT GỌN của người khác — không có email/date_of_birth/status."
+          }
+        },
+        {
+          "name": "Search Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/search?q=an&page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "search"],
+              "query": [
+                { "key": "q", "value": "an", "description": "bắt buộc, không rỗng" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            },
+            "description": "Kết quả kèm relationship: FRIEND/REQUEST_SENT/REQUEST_RECEIVED/BLOCKED/NONE. '%' và '_' bị vô hiệu hóa (chặn wildcard injection)."
+          }
+        },
+        {
+          "name": "Get My Settings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/me/settings", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "me", "settings"] },
+            "description": "Tự tạo mặc định (EVERYONE/EVERYONE/true) nếu đây là lần đọc đầu tiên."
+          }
+        },
+        {
+          "name": "Update My Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"online_visibility\": \"FRIENDS_ONLY\",\n  \"call_permission\": \"NOBODY\",\n  \"notification_enabled\": false\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/users/me/settings", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "me", "settings"] },
+            "description": "PUT thay thế toàn bộ — cả 3 field đều bắt buộc, giá trị enum chỉ nhận EVERYONE/FRIENDS_ONLY/NOBODY."
+          }
+        },
+        {
+          "name": "Block User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/{{target_user_id}}/block", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "{{target_user_id}}", "block"] },
+            "description": "Hủy luôn quan hệ bạn bè nếu đang là bạn. Chặn 2 lần liên tiếp -> 409 ALREADY_BLOCKED."
+          }
+        },
+        {
+          "name": "Unblock User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/{{target_user_id}}/block", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "{{target_user_id}}", "block"] },
+            "description": "Idempotent — bỏ chặn người chưa từng chặn vẫn trả 200."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Friend",
+      "description": "8 endpoint — TOÀN BỘ yêu cầu Bearer token. Xem 09_API_REFERENCE_USER_FRIEND.md.",
+      "item": [
+        {
+          "name": "Send Friend Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) { pm.collectionVariables.set('friend_request_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"receiver_id\": \"{{target_user_id}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests"] },
+            "description": "201. Nếu receiver đã gửi lời mời chéo cho mình từ trước, tự động ACCEPTED thay vì tạo request thứ 2. Test script tự lưu id vào {{friend_request_id}}."
+          }
+        },
+        {
+          "name": "Accept Friend Request",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/{{friend_request_id}}/accept", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "{{friend_request_id}}", "accept"] },
+            "description": "Chỉ người NHẬN gọi được. Gọi 2 lần (double-click) -> lần 2 trả 409 FRIEND_REQUEST_NOT_PENDING, không tạo Friendship trùng."
+          }
+        },
+        {
+          "name": "Reject Friend Request",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/{{friend_request_id}}/reject", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "{{friend_request_id}}", "reject"] },
+            "description": "Chỉ người NHẬN gọi được. Request giữ lại (status=REJECTED) — sender gửi lại được sau này."
+          }
+        },
+        {
+          "name": "Cancel Friend Request",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/{{friend_request_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "{{friend_request_id}}"] },
+            "description": "Chỉ người GỬI gọi được — ngược vai với accept/reject."
+          }
+        },
+        {
+          "name": "Get Received Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/received?page=0&size=20", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "received"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] },
+            "description": "Lời mời đang chờ TÔI duyệt (tôi là receiver, status=PENDING)."
+          }
+        },
+        {
+          "name": "Get Sent Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/sent?page=0&size=20", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "sent"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] },
+            "description": "Lời mời TÔI đã gửi, đang chờ phản hồi (tôi là sender, status=PENDING)."
+          }
+        },
+        {
+          "name": "Get Friends List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friends?page=0&size=20", "host": ["{{base_url}}"], "path": ["api", "v1", "friends"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] },
+            "description": "user trong mỗi phần tử luôn là NGƯỜI KIA, không phải chính bạn."
+          }
+        },
+        {
+          "name": "Remove Friend",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friends/{{target_user_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "friends", "{{target_user_id}}"] },
+            "description": "KHÔNG idempotent — gọi lại lần 2 sau khi đã hủy sẽ nhận 404 NOT_FRIENDS."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Full Flow - 2 Users (Alice & Bob)",
+      "description": "Chạy TUẦN TỰ từng request trong folder này (Collection Runner hoặc bấm Send lần lượt) để tái hiện đúng kịch bản §9.1-9.4 của 09_API_REFERENCE_USER_FRIEND.md — không phụ thuộc dữ liệu seed có sẵn. Riêng 2 bước 'Verify Email' cần bạn tự mở MailHog (http://localhost:8025), lấy OTP rồi dán vào biến collection alice_otp/bob_otp trước khi Send.",
+      "item": [
+        {
+          "name": "1. Register Alice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{alice_email}}\",\n  \"password\": \"{{alice_password}}\",\n  \"username\": \"{{alice_username}}\",\n  \"display_name\": \"Alice Postman\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "register"] }
+          }
+        },
+        {
+          "name": "2. Register Bob",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{bob_email}}\",\n  \"password\": \"{{bob_password}}\",\n  \"username\": \"{{bob_username}}\",\n  \"display_name\": \"Bob Postman\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "register"] }
+          }
+        },
+        {
+          "name": "3. Verify Alice (tự lấy OTP từ MailHog)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Dev-only: MailHog lưu mail dạng SMTP giả, KHÔNG tồn tại ở production.",
+                  "// Lấy đúng mail của alice_email (không lẫn với mail của Bob) qua endpoint search-by-recipient.",
+                  "const email = pm.collectionVariables.get('alice_email');",
+                  "const mailhogUrl = pm.collectionVariables.get('mailhog_url');",
+                  "pm.sendRequest({",
+                  "    url: `${mailhogUrl}/api/v2/search?kind=to&query=${encodeURIComponent(email)}`,",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    if (err) { console.error('Không gọi được MailHog:', err); return; }",
+                  "    const items = res.json().items || [];",
+                  "    if (items.length === 0) { console.error('Chưa có mail nào cho', email, '— chạy lại bước Register trước'); return; }",
+                  "    // items[0] là mail MỚI NHẤT (MailHog trả về theo thứ tự mới nhất trước).",
+                  "    const body = items[0].Content.Body;",
+                  "    // OTP là dãy 6 chữ số đứng ngay sau dấu ':' — dấu ':' và khoảng trắng KHÔNG bị",
+                  "    // quoted-printable encode nên vẫn nguyên vẹn trong raw body dù chữ có dấu bị encode.",
+                  "    const match = body.match(/:\\s*(\\d{6})\\b/);",
+                  "    if (!match) { console.error('Không tìm thấy OTP trong mail'); return; }",
+                  "    pm.collectionVariables.set('alice_otp', match[1]);",
+                  "    console.log('alice_otp =', match[1]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{alice_email}}\",\n  \"otp\": \"{{alice_otp}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/verify-email", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "verify-email"] }
+          }
+        },
+        {
+          "name": "4. Verify Bob (tự lấy OTP từ MailHog)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = pm.collectionVariables.get('bob_email');",
+                  "const mailhogUrl = pm.collectionVariables.get('mailhog_url');",
+                  "pm.sendRequest({",
+                  "    url: `${mailhogUrl}/api/v2/search?kind=to&query=${encodeURIComponent(email)}`,",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    if (err) { console.error('Không gọi được MailHog:', err); return; }",
+                  "    const items = res.json().items || [];",
+                  "    if (items.length === 0) { console.error('Chưa có mail nào cho', email, '— chạy lại bước Register trước'); return; }",
+                  "    const body = items[0].Content.Body;",
+                  "    const match = body.match(/:\\s*(\\d{6})\\b/);",
+                  "    if (!match) { console.error('Không tìm thấy OTP trong mail'); return; }",
+                  "    pm.collectionVariables.set('bob_otp', match[1]);",
+                  "    console.log('bob_otp =', match[1]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{bob_email}}\",\n  \"otp\": \"{{bob_otp}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/verify-email", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "verify-email"] }
+          }
+        },
+        {
+          "name": "5. Login Alice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) {",
+                  "    pm.collectionVariables.set('alice_token', json.data.access_token);",
+                  "    pm.collectionVariables.set('alice_refresh_token', json.data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{alice_email}}\",\n  \"password\": \"{{alice_password}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "login"] }
+          }
+        },
+        {
+          "name": "6. Login Bob",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) {",
+                  "    pm.collectionVariables.set('bob_token', json.data.access_token);",
+                  "    pm.collectionVariables.set('bob_refresh_token', json.data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{bob_email}}\",\n  \"password\": \"{{bob_password}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "login"] }
+          }
+        },
+        {
+          "name": "7. Get Bob's id (called by Bob)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) { pm.collectionVariables.set('bob_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bob_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/me", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "me"] }
+          }
+        },
+        {
+          "name": "8. Get Alice's id (called by Alice)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) { pm.collectionVariables.set('alice_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/me", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "me"] }
+          }
+        },
+        {
+          "name": "9. Alice searches Bob",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/search?q={{bob_username}}", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "search"], "query": [{ "key": "q", "value": "{{bob_username}}" }] },
+            "description": "Kỳ vọng: thấy Bob, relationship = NONE."
+          }
+        },
+        {
+          "name": "10. Alice sends friend request to Bob",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success) { pm.collectionVariables.set('friend_request_id', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{alice_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"receiver_id\": \"{{bob_id}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests"] }
+          }
+        },
+        {
+          "name": "11. Bob sees received request",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bob_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/received", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "received"] },
+            "description": "Kỳ vọng: thấy lời mời từ Alice."
+          }
+        },
+        {
+          "name": "12. Alice tries to accept her own request (expect 404)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/{{friend_request_id}}/accept", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "{{friend_request_id}}", "accept"] },
+            "description": "Kỳ vọng: 404 FRIEND_REQUEST_NOT_FOUND — chỉ receiver (Bob) mới accept được."
+          }
+        },
+        {
+          "name": "13. Bob accepts request",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bob_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/{{friend_request_id}}/accept", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "{{friend_request_id}}", "accept"] },
+            "description": "Kỳ vọng: 200, status=ACCEPTED."
+          }
+        },
+        {
+          "name": "14. Bob accepts again (expect 409 double-click)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bob_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests/{{friend_request_id}}/accept", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests", "{{friend_request_id}}", "accept"] },
+            "description": "Kỳ vọng: 409 FRIEND_REQUEST_NOT_PENDING — không tạo Friendship trùng."
+          }
+        },
+        {
+          "name": "15. Alice's friends list",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friends", "host": ["{{base_url}}"], "path": ["api", "v1", "friends"] },
+            "description": "Kỳ vọng: thấy Bob, total_elements = 1."
+          }
+        },
+        {
+          "name": "16. Bob's friends list",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bob_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friends", "host": ["{{base_url}}"], "path": ["api", "v1", "friends"] },
+            "description": "Kỳ vọng: thấy Alice."
+          }
+        },
+        {
+          "name": "17. Alice blocks Bob",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/{{bob_id}}/block", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "{{bob_id}}", "block"] },
+            "description": "Hủy luôn friendship vừa tạo ở bước 13."
+          }
+        },
+        {
+          "name": "18. Alice's friends list is now empty",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/friends", "host": ["{{base_url}}"], "path": ["api", "v1", "friends"] },
+            "description": "Kỳ vọng: total_elements = 0."
+          }
+        },
+        {
+          "name": "19. Bob tries to re-send request (expect 403 USER_BLOCKED)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bob_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"receiver_id\": \"{{alice_id}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/friend-requests", "host": ["{{base_url}}"], "path": ["api", "v1", "friend-requests"] },
+            "description": "Kỳ vọng: 403 USER_BLOCKED — response không tiết lộ ai chặn ai."
+          }
+        },
+        {
+          "name": "20. Bob's search no longer finds Alice",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bob_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/search?q={{alice_username}}", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "search"], "query": [{ "key": "q", "value": "{{alice_username}}" }] },
+            "description": "Kỳ vọng: mảng items rỗng — Alice đã chặn Bob nên Bob không tìm thấy Alice."
+          }
+        },
+        {
+          "name": "21. Alice unblocks Bob",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{alice_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/users/{{bob_id}}/block", "host": ["{{base_url}}"], "path": ["api", "v1", "users", "{{bob_id}}", "block"] }
+          }
+        }
+      ]
+    }
+  ]
+}

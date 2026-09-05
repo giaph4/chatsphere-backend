@@ -107,31 +107,31 @@ Lộ trình chia thành **9 Phase**, mỗi Phase là 1 khối tính năng hoàn 
 
 ### 2.1. Entity & Migration
 
-- [ ] `UserSettings`, `FriendRequest`, `Friendship`, `BlockedUser`.
+- [x] `UserSettings`, `FriendRequest`, `Friendship`, `BlockedUser`.
 
 ### 2.2. DTO & Mapper
 
-- [ ] `UserProfileResponse`, `UpdateProfileRequest`, `UserSearchResponse` (thông tin rút gọn, không lộ email nếu không phải chính chủ).
-- [ ] `UserMapper` (MapStruct).
+- [x] `UserProfileResponse`, `UpdateProfileRequest`, `UserSearchResponse` (thông tin rút gọn, không lộ email nếu không phải chính chủ).
+- [x] `UserMapper` (MapStruct).
 
 ### 2.3. Service Layer
 
-- [ ] `UserService.getMyProfile()`, `updateProfile()`, `uploadAvatar()` (gọi `MediaService` ở Phase 5 — có thể tạm dùng service upload đơn giản trước, refactor sau).
-- [ ] `UserService.search(keyword, pageable)`: query full-text hoặc `LIKE` (nâng cấp full-text ở Phase 8).
-- [ ] `FriendService.sendRequest()`: kiểm tra chưa là bạn, chưa có request PENDING, chưa bị block.
-- [ ] `FriendService.acceptRequest()`: tạo `Friendship` (đảm bảo `userId1 < userId2`), xóa/cập nhật request.
-- [ ] `FriendService.rejectRequest()`, `cancelRequest()`.
-- [ ] `FriendService.getFriendList()`, `removeFriend()`.
-- [ ] `BlockService.blockUser()`, `unblockUser()`, `isBlocked(userId1, userId2)` (dùng ở nhiều nơi: chat, call — nên cache kết quả này trong Redis với TTL ngắn nếu cần tối ưu).
-- [ ] `UserSettingsService.updateSettings()`.
+- [x] `UserService.getMyProfile()`, `updateProfile()`, `uploadAvatar()` (gọi `MediaService` ở Phase 5 — có thể tạm dùng service upload đơn giản trước, refactor sau).
+- [x] `UserService.search(keyword, pageable)`: query full-text hoặc `LIKE` (nâng cấp full-text ở Phase 8).
+- [x] `FriendService.sendRequest()`: kiểm tra chưa là bạn, chưa có request PENDING, chưa bị block.
+- [x] `FriendService.acceptRequest()`: tạo `Friendship` (đảm bảo `userId1 < userId2`), xóa/cập nhật request.
+- [x] `FriendService.rejectRequest()`, `cancelRequest()`.
+- [x] `FriendService.getFriendList()`, `removeFriend()`.
+- [x] `BlockService.blockUser()`, `unblockUser()`, `isBlocked(userId1, userId2)` (dùng ở nhiều nơi: chat, call — nên cache kết quả này trong Redis với TTL ngắn nếu cần tối ưu).
+- [x] `UserSettingsService.updateSettings()`.
 
 ### 2.4. Controller
 
-- [ ] `UserController`, `FriendController` theo mục 8.2.
+- [x] `UserController`, `FriendController` theo mục 8.2.
 
 ### 2.5. Test
 
-- [ ] Unit test cho toàn bộ luồng ngoại lệ: gửi lời mời cho người đã chặn mình, chấp nhận request không tồn tại, kết bạn với chính mình.
+- [x] Unit test cho toàn bộ luồng ngoại lệ: gửi lời mời cho người đã chặn mình, chấp nhận request không tồn tại, kết bạn với chính mình.
 
 **Kiểm tra hoàn thành Phase 2**: tạo 2 user, thực hiện gửi/nhận/chấp nhận lời mời kết bạn, xem danh sách bạn bè, thử chặn 1 user và xác nhận API trả lỗi khi user bị chặn cố gắng tương tác.
 

@@ -3,6 +3,9 @@ package com.chatsphere.auth;
 import com.chatsphere.auth.event.EmailVerificationRequestedEvent;
 import com.chatsphere.support.AbstractIntegrationTest;
 import com.jayway.jsonpath.JsonPath;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +15,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Properties;
+
+import static org.mockito.Mockito.when;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,6 +48,18 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
     /** Chặn mọi kết nối SMTP thật trong test. */
     @MockitoBean
     private JavaMailSender mailSender;
+
+    /**
+     * SmtpEmailService gọi mailSender.createMimeMessage() (không phải void như send()) — một mock
+     * Mockito CHƯA stub sẽ trả về null cho method có giá trị trả về, gây NullPointerException bên
+     * trong MimeMessageHelper. Stub nó trả về MimeMessage thật (không cần Session kết nối SMTP nào)
+     * để nhánh build email HTML/Thymeleaf được test thật, thay vì luôn ném lỗi bị nuốt âm thầm.
+     */
+    @BeforeEach
+    void stubMimeMessageCreation() {
+        when(mailSender.createMimeMessage())
+                .thenAnswer(invocation -> new MimeMessage(Session.getInstance(new Properties())));
+    }
 
     @Test
     void dangKy_xacThuc_dangNhap_goiApiBaoVe() throws Exception {

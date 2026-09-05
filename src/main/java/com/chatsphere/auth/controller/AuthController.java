@@ -37,6 +37,14 @@ public class AuthController {
         return ApiResponse.ok();
     }
 
+    @PostMapping("/resend-otp")
+    @Operation(summary = "Gửi lại mã OTP xác thực; luôn trả 200 dù email không tồn tại, "
+            + "giới hạn 60 giây/lần và 3 lần/giờ")
+    public ApiResponse<Void> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
+        authService.resendVerificationOtp(request);
+        return ApiResponse.ok();
+    }
+
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập, trả về access token + refresh token")
     public ApiResponse<LoginResponse> login(

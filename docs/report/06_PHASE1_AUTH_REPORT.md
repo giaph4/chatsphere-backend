@@ -119,56 +119,7 @@ mở 5 thư mục khác nhau.
 
 ## 3. KIẾN TRÚC TẦNG
 
-```mermaid
-flowchart TB
-    C[Client<br/>React / Postman]
-
-    subgraph FILTER["Chuỗi Servlet Filter (Spring Security)"]
-        direction LR
-        F1[CorsFilter] --> F2[JwtAuthenticationFilter<br/>đọc Bearer token<br/>→ SecurityContext]
-        F2 --> F3[AuthorizationFilter<br/>áp rule permitAll/authenticated]
-        F3 --> F4[ExceptionTranslationFilter<br/>→ 401 / 403 JSON]
-    end
-
-    subgraph WEB["Tầng Web"]
-        AC[AuthController<br/>@Valid, bọc ApiResponse]
-        GEH[GlobalExceptionHandler<br/>@RestControllerAdvice]
-    end
-
-    subgraph BIZ["Tầng nghiệp vụ"]
-        AS[AuthService<br/>@Transactional]
-        ATS[AuthTokenStore]
-        RTR[RefreshTokenRevoker<br/>REQUIRES_NEW]
-        JTP[JwtTokenProvider]
-        TH[TokenHasher]
-        PE[PasswordEncoder<br/>BCrypt 12]
-    end
-
-    subgraph DATA["Tầng dữ liệu"]
-        UR[(UserRepository)]
-        RTREPO[(RefreshTokenRepository)]
-        PG[(PostgreSQL)]
-        RD[(Redis)]
-    end
-
-    subgraph ASYNC["Nền — sau khi commit"]
-        EL[EmailEventListener<br/>@Async mailExecutor]
-        SES[SmtpEmailService]
-        SMTP[(MailHog / SMTP)]
-    end
-
-    C -->|HTTP| F1
-    F4 --> AC
-    AC --> AS
-    AC -.exception.-> GEH
-    AS --> ATS & RTR & JTP & TH & PE
-    AS --> UR & RTREPO
-    UR & RTREPO --> PG
-    ATS --> RD
-    AS -.publishEvent.-> EL
-    EL --> SES --> SMTP
-```
-
+![img.png](../../img.png)
 **Đọc sơ đồ theo một request**: request chạy qua chuỗi filter trước, `JwtAuthenticationFilter`
 dịch `Authorization: Bearer ...` thành danh tính trong `SecurityContext`; `AuthorizationFilter`
 quyết định cho qua hay chặn; đến được controller thì controller chỉ chuyển tiếp xuống service.
@@ -179,38 +130,7 @@ nằm trong đường đi của response — nó tách ra nhánh nền sau khi t
 
 ## 4. MÔ HÌNH DỮ LIỆU
 
-```mermaid
-erDiagram
-    users ||--o{ refresh_tokens : "1 user - N phiên"
-
-    users {
-        uuid        id PK "gen_random_uuid()"
-        varchar255  email UK "lưu chữ thường"
-        varchar255  password_hash "BCrypt, không bao giờ lộ ra DTO"
-        varchar50   username UK
-        varchar100  display_name
-        varchar500  avatar_url "null - Phase 2"
-        varchar255  bio "null - Phase 2"
-        date        date_of_birth "null"
-        varchar20   status "PENDING_VERIFICATION | ACTIVE | LOCKED | DEACTIVATED"
-        varchar20   role "USER | ADMIN"
-        timestamptz last_login_at
-        timestamptz created_at
-        timestamptz updated_at
-        timestamptz deleted_at "soft delete"
-    }
-
-    refresh_tokens {
-        uuid        id PK
-        uuid        user_id FK "ON DELETE CASCADE"
-        varchar255  token_hash UK "SHA-256 hex, KHÔNG lưu raw"
-        varchar255  device_info "từ header User-Agent"
-        timestamptz expires_at
-        boolean     revoked "mặc định false"
-        timestamptz created_at
-    }
-```
-
+![img_1.png](../../img_1.png)
 ### State machine của `users.status`
 
 ```mermaid

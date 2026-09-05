@@ -22,15 +22,21 @@ public class AuthTokenStore {
 
     private static final String KEY_EMAIL_OTP = "email_verify:";
     private static final String KEY_OTP_ATTEMPT = "email_verify_attempt:";
+    private static final String KEY_OTP_RESEND_COOLDOWN = "otp_resend_cooldown:";
+    private static final String KEY_OTP_RESEND_QUOTA = "otp_resend_quota:";
     private static final String KEY_PASSWORD_RESET = "password_reset:";
     private static final String KEY_LOGIN_ATTEMPT = "login_attempt:";
 
     private static final Duration OTP_TTL = Duration.ofMinutes(15);
     private static final Duration RESET_TTL = Duration.ofMinutes(15);
     private static final Duration LOCK_TTL = Duration.ofMinutes(15);
+    private static final Duration RESEND_QUOTA_WINDOW = Duration.ofHours(1);
 
     public static final int MAX_LOGIN_ATTEMPTS = 5;
     public static final int MAX_OTP_ATTEMPTS = 5;
+    public static final int MAX_OTP_RESENDS_PER_HOUR = 3;
+    public static final int RESEND_COOLDOWN_SECONDS = 60;
+    private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(RESEND_COOLDOWN_SECONDS);
 
     private final StringRedisTemplate redis;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -78,6 +84,34 @@ public class AuthTokenStore {
     public void clearEmailOtp(String email) {
         redis.delete(KEY_EMAIL_OTP + email);
         redis.delete(KEY_OTP_ATTEMPT + email);
+    }
+
+    /**
+     * Xin quyền gửi lại OTP — hai tầng chặn, tiêu tốn quota NGAY CẢ KHI email không tồn tại.
+     * <p>Đó là chủ ý: nếu chỉ giới hạn khi email có thật, thời gian/kết quả phản hồi sẽ khác nhau
+     * giữa email tồn tại và không tồn tại → thành công cụ dò danh sách email (user enumeration).
+     * <ul>
+     *   <li><b>Cooldown {@value #RESEND_COOLDOWN_SECONDS}s</b>: chặn bấm nút liên tục. Dùng SETNX
+     *       (nguyên tử) nên nhiều request đồng thời chỉ một cái lọt qua.</li>
+     *   <li><b>Quota {@value #MAX_OTP_RESENDS_PER_HOUR} lần/giờ</b>: chặn kẻ xấu biến hệ thống thành
+     *       công cụ spam người khác và đốt sạch hạn mức SMTP (Gmail free ~500 mail/ngày).</li>
+     * </ul>
+     *
+     * @return true nếu được phép gửi
+     */
+    public boolean tryAcquireOtpResend(String email) {
+        Boolean acquired = redis.opsForValue()
+                .setIfAbsent(KEY_OTP_RESEND_COOLDOWN + email, "1", RESEND_COOLDOWN);
+        if (!Boolean.TRUE.equals(acquired)) {
+            return false; // còn trong cooldown
+        }
+
+        String quotaKey = KEY_OTP_RESEND_QUOTA + email;
+        Long used = redis.opsForValue().increment(quotaKey);
+        if (used != null && used == 1L) {
+            redis.expire(quotaKey, RESEND_QUOTA_WINDOW); // cửa sổ 1h tính từ lần gửi đầu
+        }
+        return used == null || used <= MAX_OTP_RESENDS_PER_HOUR;
     }
 
     // ---------- Token đặt lại mật khẩu ----------

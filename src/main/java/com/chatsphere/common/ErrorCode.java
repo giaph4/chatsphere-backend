@@ -26,7 +26,21 @@ public enum ErrorCode {
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"),
     TOO_MANY_LOGIN_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "Đăng nhập sai quá nhiều lần, vui lòng thử lại sau 15 phút"),
     INVALID_RESET_TOKEN(HttpStatus.BAD_REQUEST, "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn"),
-    WRONG_OLD_PASSWORD(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không đúng");
+    WRONG_OLD_PASSWORD(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không đúng"),
+    TOO_MANY_OTP_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn vừa yêu cầu mã xác thực, vui lòng đợi rồi thử lại"),
+
+    // ---------- User & Friend (Phase 2 — UC-08..UC-13) ----------
+    CANNOT_FRIEND_SELF(HttpStatus.BAD_REQUEST, "Không thể gửi lời mời kết bạn cho chính mình"),
+    ALREADY_FRIENDS(HttpStatus.CONFLICT, "Hai người đã là bạn bè"),
+    FRIEND_REQUEST_ALREADY_SENT(HttpStatus.CONFLICT, "Đã gửi lời mời kết bạn, đang chờ phản hồi"),
+    FRIEND_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy lời mời kết bạn"),
+    FRIEND_REQUEST_NOT_PENDING(HttpStatus.CONFLICT, "Lời mời này đã được xử lý trước đó"),
+    NOT_FRIENDS(HttpStatus.NOT_FOUND, "Hai người chưa phải là bạn bè"),
+    // Cùng một mã cho cả 2 chiều chặn: nếu phân biệt, người gửi sẽ biết chắc mình bị chặn —
+    // đúng thứ mà tính năng chặn cố tình che giấu.
+    USER_BLOCKED(HttpStatus.FORBIDDEN, "Không thể thực hiện thao tác với người dùng này"),
+    CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "Không thể tự chặn chính mình"),
+    ALREADY_BLOCKED(HttpStatus.CONFLICT, "Bạn đã chặn người dùng này");
 
     private final HttpStatus status;
     private final String defaultMessage;

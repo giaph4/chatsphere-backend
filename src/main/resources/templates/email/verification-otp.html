@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Mã xác thực ChatSphere</title>
+</head>
+<!--
+  Email HTML dùng CSS INLINE và layout bằng <table>: Gmail/Outlook bóc bỏ thẻ <style>
+  và không hỗ trợ flexbox/grid. Đây là ràng buộc của client mail, không phải code cũ kỹ.
+-->
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+       style="background-color:#f4f5f7;padding:32px 16px;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                   style="max-width:520px;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+
+                <tr>
+                    <td style="background-color:#2563eb;padding:24px 32px;">
+                        <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.5px;">ChatSphere</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:32px;">
+                        <p style="margin:0 0 16px;font-size:16px;color:#111827;">
+                            Chào <strong th:text="${displayName}">bạn</strong>,
+                        </p>
+                        <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+                            Đây là mã xác thực tài khoản ChatSphere của bạn:
+                        </p>
+
+                        <div style="margin:0 0 24px;padding:20px;background-color:#f3f4f6;border-radius:10px;text-align:center;">
+                            <span th:text="${otp}"
+                                  style="font-family:'Courier New',Courier,monospace;font-size:34px;font-weight:bold;letter-spacing:10px;color:#111827;">000000</span>
+                        </div>
+
+                        <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#374151;">
+                            Mã có hiệu lực trong <strong th:text="${ttlMinutes}">15</strong> phút và chỉ dùng được một lần.
+                        </p>
+                        <p style="margin:0;font-size:14px;line-height:1.6;color:#6b7280;">
+                            Nếu bạn không đăng ký ChatSphere, hãy bỏ qua email này — sẽ không có gì thay đổi.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:20px 32px;background-color:#f9fafb;border-top:1px solid #e5e7eb;">
+                        <p style="margin:0;font-size:12px;line-height:1.5;color:#9ca3af;">
+                            Email tự động — vui lòng không trả lời. ChatSphere sẽ không bao giờ hỏi mã này qua điện thoại hay tin nhắn.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
