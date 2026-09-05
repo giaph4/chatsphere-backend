@@ -173,8 +173,8 @@ phải bug.
 Ngoài ra `POST /conversations/{id}/messages` và `/app/chat.sendMessage` nhận thêm field `attachments`.
 Kênh WebSocket bổ sung `/user/queue/notifications` (server → client).
 
-> Tài liệu API chi tiết cho nhóm endpoint này (`15_API_REFERENCE_MEDIA_NOTIFICATION.md`) **chưa
-> viết** — hiện dùng Swagger UI tại `/swagger-ui.html`.
+> Chi tiết request/response, validation, mã lỗi và ví dụ `curl` của từng endpoint:
+> `15_API_REFERENCE_MEDIA_NOTIFICATION.md`.
 
 ---
 
@@ -620,7 +620,6 @@ còn đang giữ lệnh INSERT trong hàng đợi nên câu SELECT sẽ không t
 | **Thông báo tạo cho cả người đang mở đúng hội thoại** | Huy hiệu chưa đọc nhảy lên dù người dùng đang nhìn thẳng vào tin đó | Cần theo dõi subscription đang hoạt động (nợ chung với Phase 4) |
 | **Push gửi tuần tự từng thiết bị** | Người có 5 thiết bị = 5 lần gọi mạng nối tiếp trên luồng nền | Dùng `sendAsync` nếu đo thấy chậm |
 | **`INVALID_EMOJI`, `PUSH_SUBSCRIPTION_INVALID` chưa dùng** | Hai mã lỗi khai mà chưa có chỗ ném | Xóa hoặc dùng khi siết validate emoji |
-| **Chưa có `15_API_REFERENCE_MEDIA_NOTIFICATION.md`** | Frontend phải đọc Swagger UI | Viết khi bắt đầu ráp frontend Phase 5 |
 
 ---
 
