@@ -39,7 +39,19 @@ public enum ErrorCode {
     // đúng thứ mà tính năng chặn cố tình che giấu.
     USER_BLOCKED(HttpStatus.FORBIDDEN, "Không thể thực hiện thao tác với người dùng này"),
     CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "Không thể tự chặn chính mình"),
-    ALREADY_BLOCKED(HttpStatus.CONFLICT, "Bạn đã chặn người dùng này");
+    ALREADY_BLOCKED(HttpStatus.CONFLICT, "Bạn đã chặn người dùng này"),
+
+    // ---------- Chat (Phase 3 — UC-14..UC-25, REST) ----------
+    CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy cuộc trò chuyện"),
+    NOT_CONVERSATION_MEMBER(HttpStatus.FORBIDDEN, "Bạn không phải thành viên của cuộc trò chuyện này"),
+    ALREADY_CONVERSATION_MEMBER(HttpStatus.CONFLICT, "Người này đã ở trong nhóm"),
+    GROUP_ADMIN_REQUIRED(HttpStatus.FORBIDDEN, "Chỉ trưởng nhóm mới được thực hiện thao tác này"),
+    NOT_A_GROUP_CONVERSATION(HttpStatus.BAD_REQUEST, "Thao tác này chỉ áp dụng cho nhóm chat"),
+    MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy tin nhắn"),
+    MESSAGE_RECALL_FORBIDDEN(HttpStatus.FORBIDDEN, "Chỉ người gửi mới được thu hồi tin nhắn"),
+    MESSAGE_ALREADY_RECALLED(HttpStatus.CONFLICT, "Tin nhắn đã được thu hồi trước đó"),
+    MESSAGE_RECALL_WINDOW_EXPIRED(HttpStatus.CONFLICT, "Đã quá thời gian cho phép thu hồi tin nhắn (5 phút)"),
+    MESSAGE_NOT_IN_CONVERSATION(HttpStatus.BAD_REQUEST, "Tin nhắn được reply không thuộc cuộc trò chuyện này");
 
     private final HttpStatus status;
     private final String defaultMessage;
