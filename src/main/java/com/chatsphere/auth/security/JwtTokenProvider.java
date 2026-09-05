@@ -1,4 +1,3 @@
-// File dự kiến: src/main/java/com/chatsphere/auth/security/JwtTokenProvider.java
 package com.chatsphere.auth.security;
 
 import com.chatsphere.user.domain.UserRole;
@@ -17,7 +16,6 @@ import java.util.Date;
 import java.util.UUID;
 
 @Component
-
 public class JwtTokenProvider {
 
     private static final String CLAIM_ROLE = "role";
@@ -32,8 +30,6 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(props.secret()));
         this.accessExpirationMs = props.accessExpirationMs();
     }
-
-    // ---------- Access token: JWT tự xác thực ----------
 
     public String generateAccessToken(UUID userId, UserRole role) {
         Instant now = Instant.now();
@@ -75,8 +71,6 @@ public class JwtTokenProvider {
     public UserRole getRole(Claims claims) {
         return UserRole.valueOf(claims.get(CLAIM_ROLE, String.class));
     }
-
-    // ---------- Refresh token: chuỗi ngẫu nhiên đục (opaque) ----------
 
     /**
      * KHÔNG phải JWT: 32 byte ngẫu nhiên, base64url. AuthService (§1.4) sẽ hash SHA-256 rồi mới lưu DB.

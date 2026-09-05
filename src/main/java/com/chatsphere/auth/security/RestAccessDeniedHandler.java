@@ -1,4 +1,3 @@
-// File dự kiến: src/main/java/com/chatsphere/auth/security/RestAccessDeniedHandler.java
 package com.chatsphere.auth.security;
 
 import com.chatsphere.common.ErrorCode;

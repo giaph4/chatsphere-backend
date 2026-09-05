@@ -60,7 +60,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setUsername(request.username());
         user.setDisplayName(request.displayName());
-        user.setStatus(UserStatus.PENDING_VERIFICATION); // chưa xác thực email thì chưa cho đăng nhập
+        user.setStatus(UserStatus.PENDING_VERIFICATION);
         userRepository.save(user);
 
         String otp = tokenStore.issueEmailOtp(email);

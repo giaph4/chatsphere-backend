@@ -27,7 +27,7 @@ public class CorsConfig {
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));         // mọi request header: Authorization, Content-Type...
         cfg.setExposedHeaders(List.of("Location"));  // header response JS phía FE được phép đọc (vd sau POST 201)
-        cfg.setAllowCredentials(true);               // xem ghi chú
+        cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);                        // cache preflight OPTIONS 1 giờ -> đỡ round-trip
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
