@@ -28,12 +28,10 @@ public class BlockedUser {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    /** Người thực hiện hành động chặn. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "blocker_id", nullable = false, updatable = false)
     private User blocker;
 
-    /** Người bị chặn. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "blocked_id", nullable = false, updatable = false)
     private User blocked;

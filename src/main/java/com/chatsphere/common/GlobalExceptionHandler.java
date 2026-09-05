@@ -14,9 +14,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Lỗi nghiệp vụ chủ động — status & message lấy từ ErrorCode.
-     */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
         ErrorCode code = ex.getErrorCode();
@@ -25,9 +22,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ApiError.of(code, ex.getMessage())));
     }
 
-    /**
-     * @Valid trên @RequestBody thất bại — gộp lỗi từng field vào message.
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleBodyValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()
@@ -38,27 +32,19 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ApiError.of(ErrorCode.VALIDATION_ERROR, detail)));
     }
 
-    /**
-     * @Validated trên @RequestParam / @PathVariable thất bại.
-     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleParamValidation(ConstraintViolationException ex) {
         return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getStatus())
                 .body(ApiResponse.error(ApiError.of(ErrorCode.VALIDATION_ERROR, ex.getMessage())));
     }
 
-    /**
-     * Ném từ tầng method-security (@PreAuthorize) hoặc code nghiệp vụ.
-     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(ErrorCode.ACCESS_DENIED.getStatus())
                 .body(ApiResponse.error(ApiError.of(ErrorCode.ACCESS_DENIED)));
     }
 
-    /**
-     * Lưới cuối: mọi lỗi ngoài dự kiến -> 500, log đầy đủ, không lộ chi tiết.
-     */
+    // Lưới cuối: mọi lỗi ngoài dự kiến -> 500, log đầy đủ, không lộ chi tiết cho client.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);

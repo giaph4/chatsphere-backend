@@ -42,7 +42,6 @@ public class UserSettings {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    /** Tạo settings mặc định cho user vừa đăng ký. */
     public static UserSettings defaultsFor(User user) {
         UserSettings settings = new UserSettings();
         settings.setUser(user);
