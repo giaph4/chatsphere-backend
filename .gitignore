@@ -7,6 +7,9 @@ target/
 graphify-out/
 ### Claude Code (local) ###
 .claude/settings.local.json
+# Bản sao lưu do graphify tạo khi cài hook — chứa đường dẫn tuyệt đối theo từng máy
+# (C:/Users/<tên>/...), commit lên sẽ hỏng trên máy người khác.
+*.graphify-bak
 ### OS ###
 .DS_Store
 Thumbs.db
